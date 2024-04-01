@@ -23,11 +23,18 @@ def handler(event, context):
     user_id = message['user_id']
     assign_id = message['assign_id']
 
-    if message['status'] in ['invalid_url', 'no_file']:
-        status_message = 'Download Failed and Invalid submission' if message['status'] == 'invalid_url' else 'Download Failed and No file'
+    if message['status'] == 'invalid_url': 
+        status_message = 'Download Failed and Invalid submission'
         send_email(email, status_message, 'The submission URL was invalid. Please try submitting again with the correct URL.')
         log_status_to_dynamodb(str(uuid4()), email, submission_url, 'Download Failed')
         return {'statusCode': 200, 'body': json.dumps('Invalid submission handled')}
+
+    if message['status'] == 'no_file':
+        status_message = 'Download Failed and No file'
+        send_email(email, status_message, 'The submission URL was invalid. Please try submitting again with the correct URL.')
+        log_status_to_dynamodb(str(uuid4()), email, submission_url, 'Download Failed')
+        return {'statusCode': 200, 'body': json.dumps('Invalid submission handled')}
+    
 
     try:
         # Attempt to download the file from GitHub
