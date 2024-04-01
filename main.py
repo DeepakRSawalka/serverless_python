@@ -4,11 +4,12 @@ import boto3
 from google.cloud import storage
 from uuid import uuid4
 import requests
+from datetime import datetime
 
 # Initialize AWS clients
 sns = boto3.client('sns')
 dynamodb = boto3.client('dynamodb')
-ses = boto3.client('ses', region_name=os.environ['AWS_REGION'])
+ses = boto3.client('ses', region_name=os.environ['REGION'])
 
 # Initialize Google Cloud Storage client
 gcp_credentials = json.loads(os.environ['GOOGLE_CREDENTIALS'])
@@ -46,7 +47,7 @@ def handler(event, context):
         file_url = f"gs://{os.environ['GCS_BUCKET_NAME']}/{filename}"
         send_email(email, 'Download Successful', f'Your file has been downloaded and stored successfully. Here is the link: {file_url}')
 
-        log_status_to_dynamodb(unique_id, email, submission_url, 'Download Successful')
+        log_status_to_dynamodb(unique_id, email, submission_url, 'Download Successfull')
 
         return {'statusCode': 200, 'body': json.dumps('Process completed successfully')}
     except Exception as error:
@@ -56,9 +57,40 @@ def handler(event, context):
         return {'statusCode': 500, 'body': json.dumps('Error processing your request')}
 
 def send_email(to, subject, text):
-    pass
+    mailgun_domain = os.environ.get('MAILGUN_DOMAIN')
+    mailgun_api_key = os.environ.get('MAILGUN_API_KEY')
+    mailgun_url = f"https://api.mailgun.net/v3/{mailgun_domain}/messages"
+
+    response = requests.post(
+        mailgun_url,
+        auth=("api", mailgun_api_key),
+        data={"from": "info@deepakcsye6225.me",
+              "to": to,
+              "subject": subject,
+              "text": text}
+    )
+
+    if response.status_code == 200:
+        print("Email sent successfully.")
+    else:
+        print("Failed to send email. Status code:", response.status_code)
       
 
 def log_status_to_dynamodb(id, email, url, status):
-    pass
+    dynamodb = boto3.resource('dynamodb')
+    table_name = os.environ.get('DYNAMODB_TABLE')
+    table = dynamodb.Table(table_name)
+
+    try:
+        response = table.put_item(
+            Item={
+                'id': id,
+                'Email': email,
+                'SubmissionURL': url,
+                'Status': status
+            }
+        )
+        print("Log entry added to DynamoDB successfully.")
+    except Exception as e:
+        print(f"Failed to log to DynamoDB: {e}")
      
