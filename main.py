@@ -1,7 +1,12 @@
 import os
 import json
+import sys
+# Add the lambda_dependencies folder to the sys.path
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "lambda_dependencies"))
+
 import boto3
 from google.cloud import storage
+from google.oauth2 import service_account
 from uuid import uuid4
 import requests
 from datetime import datetime, timezone
@@ -11,11 +16,13 @@ sns = boto3.client('sns')
 dynamodb = boto3.client('dynamodb')
 # ses = boto3.client('ses', region_name=os.environ['REGION'])
 
-# Initialize Google Cloud Storage client
-gcp_credentials = json.loads(os.environ.get('GOOGLE_CREDENTIALS'))
-gcs_client = storage.Client(credentials=gcp_credentials)
 
 def handler(event, context):
+
+    # Initialize Google Cloud Storage client
+    gcp_credentials = json.loads(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'))
+    gcs_client = storage.Client(credentials=gcp_credentials)
+
     message = json.loads(event['Records'][0]['Sns']['Message'])
     submission_url = message['submission_url']
     email = message['email']
