@@ -4,15 +4,15 @@ import boto3
 from google.cloud import storage
 from uuid import uuid4
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Initialize AWS clients
 sns = boto3.client('sns')
 dynamodb = boto3.client('dynamodb')
-ses = boto3.client('ses', region_name=os.environ['REGION'])
+# ses = boto3.client('ses', region_name=os.environ['REGION'])
 
 # Initialize Google Cloud Storage client
-gcp_credentials = json.loads(os.environ['GOOGLE_CREDENTIALS'])
+gcp_credentials = json.loads(os.environ.get('GOOGLE_CREDENTIALS'))
 gcs_client = storage.Client(credentials=gcp_credentials)
 
 def handler(event, context):
@@ -43,7 +43,7 @@ def handler(event, context):
 
         # Generate a unique filename
         unique_id = str(uuid4())
-        timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d-%H-%M-%S')
         filename = f"{user_name}_{user_id}/{assign_id}/{timestamp}_{unique_id}_{submission_url.split('/').pop()}"
 
         # Store in Google Cloud Storage
