@@ -20,8 +20,12 @@ dynamodb = boto3.client('dynamodb')
 def handler(event, context):
 
     # Initialize Google Cloud Storage client
-    gcp_credentials = json.loads(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'))
-    gcs_client = storage.Client(credentials=gcp_credentials)
+    gcs_credentials_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    gcs_credentials = json.loads(gcs_credentials_json)
+
+    # Create a service account credentials object
+    credentials = service_account.Credentials.from_service_account_info(gcs_credentials)
+    gcs_client = storage.Client(credentials=credentials)
 
     message = json.loads(event['Records'][0]['Sns']['Message'])
     submission_url = message['submission_url']
