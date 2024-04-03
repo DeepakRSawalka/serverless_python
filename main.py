@@ -1,21 +1,32 @@
 import os
 import json
+import sys
+# Add the lambda_dependencies folder to the sys.path
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "lambda_dependencies"))
+
 import boto3
 from google.cloud import storage
+from google.oauth2 import service_account
 from uuid import uuid4
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Initialize AWS clients
 sns = boto3.client('sns')
 dynamodb = boto3.client('dynamodb')
-ses = boto3.client('ses', region_name=os.environ['REGION'])
+# ses = boto3.client('ses', region_name=os.environ['REGION'])
 
-# Initialize Google Cloud Storage client
-gcp_credentials = json.loads(os.environ['GOOGLE_CREDENTIALS'])
-gcs_client = storage.Client(credentials=gcp_credentials)
 
 def handler(event, context):
+
+    # Initialize Google Cloud Storage client
+    gcs_credentials_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    gcs_credentials = json.loads(gcs_credentials_json)
+
+    # Create a service account credentials object
+    credentials = service_account.Credentials.from_service_account_info(gcs_credentials)
+    gcs_client = storage.Client(credentials=credentials)
+
     message = json.loads(event['Records'][0]['Sns']['Message'])
     submission_url = message['submission_url']
     email = message['email']
@@ -43,7 +54,7 @@ def handler(event, context):
 
         # Generate a unique filename
         unique_id = str(uuid4())
-        timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d-%H-%M-%S')
         filename = f"{user_name}_{user_id}/{assign_id}/{timestamp}_{unique_id}_{submission_url.split('/').pop()}"
 
         # Store in Google Cloud Storage
