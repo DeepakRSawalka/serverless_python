@@ -14,8 +14,6 @@ from datetime import datetime, timezone
 # Initialize AWS clients
 sns = boto3.client('sns')
 dynamodb = boto3.client('dynamodb')
-# ses = boto3.client('ses', region_name=os.environ['REGION'])
-
 
 def handler(event, context):
 

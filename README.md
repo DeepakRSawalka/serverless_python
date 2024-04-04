@@ -25,7 +25,7 @@ python3 -m venv .venv
 ```
 **Step 3** : Activate Virtual Environment in cmd.exe 
 ```bash
-.\venv\Scripts\activate
+.\venv\Scripts\activate.bat
 ```
 **Step 4** : Install dependencies from requirements.txt file
 ```bash
